@@ -1,0 +1,55 @@
+module alu
+#(parameter width = 6)
+(a,b,cin,alu,carry,zero,ctl); 
+
+input [width-1:0] a;
+input [width-1:0] b; // port A,B 
+input cin ; // carry input from carry flag register 
+output [width-1:0] alu; // the result 
+output carry; // carry output 
+output zero ; // zero output 
+input [3:0] ctl ; // functionality control for ALU 
+wire [width:0] result; // ALU result 
+
+assign result = alu_out(a,b,cin,ctl); 
+assign alu = result[width-1:0]; 
+assign carry = result[width];
+
+
+function [width:0] alu_out; 
+input [width-1:0] a;
+input [width-1:0] b; 
+input cin ; 
+input [3:0] ctl ; 
+case ( ctl ) 
+4'b0000: alu_out=b; // select data on port B 
+4'b0001: alu_out=b+4'b0001 ; // increment data on port B 
+4'b0010: alu_out=b-4'b0001 ; // decrement data on port B 
+4'b0011: alu_out=a+b; // ADD without CARRY 
+4'b0100: alu_out=a+b+cin; // ADD with CARRY 
+4'b0101: alu_out=a-b ; // SUB without BORROW 
+4'b0110: alu_out=a-b+(~cin); // SUB with BORROW 
+4'b0111: alu_out=a&b; // AND 
+4'b1000: alu_out=a|b; // OR 
+4'b1001: alu_out=a^b; // EXOR 
+4'b1010: alu_out={b[3:0],1'b0}; // Shift Left 
+4'b1011: alu_out={b[0],1'b0,b[3:1]}; // Shift Right 
+4'b1100: alu_out={b[3:0],cin}; // Rotate Left 
+4'b1101: alu_out={b[0],cin,b[3:1]}; // Rotate Right 
+default : begin 
+alu_out=9'bxxxxxxxxx; 
+$display("Illegal CTL detected!!"); 
+end 
+endcase /* {...,...,...} is for the concatenation. 
+{ADD_WITH_CARRY,SUB_WITH_BORROW}==2'b11 is used 
+to force the CARRY==1 for the increment operation */ 
+endfunction // end of function "result" 
+
+function z_flag ; 
+input [4:0] a4 ; 
+begin 
+z_flag = ^(a4[0]|a4[1]|a4[2]|a4[3]) ; // zero flag check for a4 
+end 
+endfunction 
+
+endmodule
